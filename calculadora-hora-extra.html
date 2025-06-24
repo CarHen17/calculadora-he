@@ -1,0 +1,3130 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Profissional de Controle de Horas Extras - CLT</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #1e3a8a;
+            --primary-light: #3b82f6;
+            --secondary: #64748b;
+            --success: #059669;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --border: #e2e8f0;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --border-radius: 8px;
+            --transition: all 0.2s ease-in-out;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--background);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+        
+        .header {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--border-radius);
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow);
+        }
+        
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .header-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border-radius: var(--border-radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+        
+        .header-text h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        
+        .header-text p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        .header-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        .datetime-display {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--background);
+            padding: 8px 12px;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border);
+        }
+        
+        .tabs {
+            display: flex;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--border-radius);
+            margin-bottom: 24px;
+            overflow: hidden;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 16px 20px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+            font-size: 14px;
+            border-right: 1px solid var(--border);
+        }
+        
+        .tab:last-child {
+            border-right: none;
+        }
+        
+        .tab.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .tab:hover:not(.active) {
+            background: var(--background);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .grid {
+            display: grid;
+            gap: 24px;
+        }
+        
+        .grid-2 {
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+        }
+        
+        .grid-1 {
+            grid-template-columns: 1fr;
+        }
+        
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        
+        .card-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            background: var(--background);
+        }
+        
+        .card-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 4px;
+        }
+        
+        .card-title h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .card-subtitle {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        .card-content {
+            padding: 24px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--border-radius);
+            font-size: 14px;
+            transition: var(--transition);
+            background: var(--surface);
+            color: var(--text-primary);
+        }
+        
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        
+        .form-row-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+        }
+        
+        @media (max-width: 640px) {
+            .form-row, .form-row-3 {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-light);
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            opacity: 0.9;
+        }
+        
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+        
+        .btn-warning:hover {
+            opacity: 0.9;
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            opacity: 0.9;
+        }
+        
+        .btn-secondary {
+            background: var(--secondary);
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            opacity: 0.9;
+        }
+        
+        .btn-full {
+            width: 100%;
+        }
+        
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .quick-btn {
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--border-radius);
+            background: var(--surface);
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .quick-btn:hover {
+            border-color: var(--primary);
+            background: var(--background);
+        }
+        
+        .alert {
+            padding: 16px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+            border: 1px solid;
+        }
+        
+        .alert-info {
+            background: #eff6ff;
+            border-color: #bfdbfe;
+            color: #1e40af;
+        }
+        
+        .alert-success {
+            background: #f0fdf4;
+            border-color: #bbf7d0;
+            color: #166534;
+        }
+        
+        .alert-warning {
+            background: #fffbeb;
+            border-color: #fed7aa;
+            color: #92400e;
+        }
+        
+        .alert-danger {
+            background: #fef2f2;
+            border-color: #fecaca;
+            color: #991b1b;
+        }
+        
+        .alert-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+        
+        .metric-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .metric-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        
+        .metric-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .metric-value.positive {
+            color: var(--success);
+        }
+        
+        .metric-value.negative {
+            color: var(--danger);
+        }
+        
+        .table-container {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .table th {
+            background: var(--background);
+            padding: 16px 12px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+        
+        .table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+        
+        .table tbody tr:hover {
+            background: var(--background);
+        }
+        
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .badge-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+        
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .badge-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .badge-info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .intelligence-panel {
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            border: 1px solid #0ea5e9;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .intelligence-panel.show {
+            display: block;
+        }
+        
+        .intelligence-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            font-weight: 600;
+            color: #0c4a6e;
+        }
+        
+        .intelligence-content {
+            color: #0f172a;
+            line-height: 1.6;
+        }
+        
+        .calculation-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(14, 165, 233, 0.2);
+        }
+        
+        .calculation-row:last-child {
+            border-bottom: none;
+            font-weight: 600;
+            background: rgba(14, 165, 233, 0.1);
+            padding: 12px 16px;
+            margin: 12px -20px -20px -20px;
+            border-radius: 0 0 var(--border-radius) var(--border-radius);
+        }
+        
+        .upload-zone {
+            border: 2px dashed var(--border);
+            border-radius: var(--border-radius);
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            background: var(--background);
+        }
+        
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: var(--primary);
+            background: #f8fafc;
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+        
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 20px;
+            border-radius: var(--border-radius);
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: var(--transition);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.success {
+            background: var(--success);
+        }
+        
+        .notification.error {
+            background: var(--danger);
+        }
+        
+        .notification.info {
+            background: var(--primary);
+        }
+        
+        .actions-row {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+        
+        .btn-sm {
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+        
+        .export-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+        
+        .floating-help {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: var(--transition);
+        }
+        
+        .floating-help:hover {
+            background: var(--primary-light);
+            transform: scale(1.05);
+        }
+        
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            
+            body {
+                background: white;
+            }
+            
+            .card {
+                box-shadow: none;
+                border: 1px solid #ccc;
+            }
+        }
+        
+        .clt-info {
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+            border: 1px solid #22c55e;
+            border-radius: var(--border-radius);
+            padding: 16px;
+            margin: 16px 0;
+        }
+        
+        .clt-info-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            color: #166534;
+            margin-bottom: 12px;
+        }
+        
+        .clt-info-content {
+            color: #166534;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--background);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 12px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header Profissional -->
+        <div class="header">
+            <div class="header-content">
+                <div class="header-title">
+                    <div class="header-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="header-text">
+                        <h1>Sistema de Controle de Horas Extras</h1>
+                        <p>Gestão profissional conforme CLT - Art. 59 e 60</p>
+                    </div>
+                </div>
+                <div class="header-info">
+                    <div class="datetime-display">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span id="currentDateTime"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Navegação -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('registro')">
+                <i class="fas fa-edit"></i> Registro
+            </button>
+            <button class="tab" onclick="switchTab('importacao')">
+                <i class="fas fa-upload"></i> Importação
+            </button>
+            <button class="tab" onclick="switchTab('relatorios')">
+                <i class="fas fa-chart-bar"></i> Relatórios
+            </button>
+            <button class="tab" onclick="switchTab('configuracoes')">
+                <i class="fas fa-cog"></i> Configurações
+            </button>
+        </div>
+        
+        <!-- Aba Registro -->
+        <div id="tab-registro" class="tab-content active">
+            <div class="grid grid-2">
+                <!-- Formulário de Registro -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-user-clock"></i>
+                            <h2>Registro de Ponto</h2>
+                        </div>
+                        <div class="card-subtitle">Cálculo automático conforme CLT</div>
+                    </div>
+                    <div class="card-content">
+                        <!-- Ações Rápidas -->
+                        <div class="quick-actions">
+                            <div class="quick-btn" onclick="preencherHorarioComercial()">
+                                <i class="fas fa-business-time"></i>
+                                Comercial (8h-17h)
+                            </div>
+                            <div class="quick-btn" onclick="preencherHorarioManha()">
+                                <i class="fas fa-sun"></i>
+                                Manhã (6h-14h)
+                            </div>
+                            <div class="quick-btn" onclick="preencherHorarioNoite()">
+                                <i class="fas fa-moon"></i>
+                                Noturno (22h-6h)
+                            </div>
+                            <div class="quick-btn" onclick="preencherFimSemana()">
+                                <i class="fas fa-calendar-weekend"></i>
+                                Fim de Semana
+                            </div>
+                        </div>
+                        
+                        <form id="pontoForm">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-user"></i>
+                                    Nome do Funcionário
+                                </label>
+                                <input type="text" class="form-input" id="nomeFuncionario" 
+                                       placeholder="Digite o nome completo" required list="funcionarios">
+                                <datalist id="funcionarios"></datalist>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-calendar"></i>
+                                        Data
+                                    </label>
+                                    <input type="date" class="form-input" id="data" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-dollar-sign"></i>
+                                        Salário Base (R$)
+                                    </label>
+                                    <input type="number" class="form-input" id="salarioBase" 
+                                           placeholder="0,00" step="0.01" value="1400">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-sign-in-alt"></i>
+                                        Hora de Entrada
+                                    </label>
+                                    <input type="time" class="form-input" id="horaEntrada" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-sign-out-alt"></i>
+                                        Hora de Saída
+                                    </label>
+                                    <input type="time" class="form-input" id="horaSaida" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-coffee"></i>
+                                        Intervalo - Início
+                                    </label>
+                                    <input type="time" class="form-input" id="intervaloInicio" value="12:00">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-coffee"></i>
+                                        Intervalo - Fim
+                                    </label>
+                                    <input type="time" class="form-input" id="intervaloFim" value="13:00">
+                                </div>
+                            </div>
+                            
+                            <!-- Painel de Análise Inteligente -->
+                            <div id="intelligencePanel" class="intelligence-panel">
+                                <div class="intelligence-header">
+                                    <i class="fas fa-brain"></i>
+                                    Análise CLT Automática
+                                </div>
+                                <div class="intelligence-content" id="intelligenceContent">
+                                    <!-- Conteúdo será preenchido pelo JavaScript -->
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-sticky-note"></i>
+                                    Justificativa/Observações
+                                </label>
+                                <textarea class="form-textarea" id="justificativa" rows="3" 
+                                          placeholder="Adicione observações sobre o trabalho realizado..."></textarea>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary btn-full">
+                                <i class="fas fa-calculator"></i>
+                                Calcular e Registrar
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Painel de Informações CLT -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-gavel"></i>
+                            <h2>Informações CLT</h2>
+                        </div>
+                        <div class="card-subtitle">Legislação trabalhista brasileira</div>
+                    </div>
+                    <div class="card-content">
+                        <div class="clt-info">
+                            <div class="clt-info-title">
+                                <i class="fas fa-info-circle"></i>
+                                Artigo 59 - CLT
+                            </div>
+                            <div class="clt-info-content">
+                                <strong>Horas Extras em Dias Úteis:</strong><br>
+                                • Limite: 2 horas diárias<br>
+                                • Adicional: 50% sobre o valor da hora normal<br>
+                                • Jornada máxima: 10 horas diárias
+                            </div>
+                        </div>
+                        
+                        <div class="clt-info">
+                            <div class="clt-info-title">
+                                <i class="fas fa-calendar-week"></i>
+                                Domingos e Feriados
+                            </div>
+                            <div class="clt-info-content">
+                                <strong>Trabalho Excepcional:</strong><br>
+                                • Adicional: 100% sobre o valor da hora normal<br>
+                                • Necessária autorização prévia<br>
+                                • Compensação obrigatória
+                            </div>
+                        </div>
+                        
+                        <div class="clt-info">
+                            <div class="clt-info-title">
+                                <i class="fas fa-calculator"></i>
+                                Cálculo do Valor Hora
+                            </div>
+                            <div class="clt-info-content">
+                                <strong>Fórmula:</strong><br>
+                                Valor/hora = Salário mensal ÷ 220h<br>
+                                (Considera 44h semanais × 5 semanas)
+                            </div>
+                        </div>
+                        
+                        <!-- Estatísticas Rápidas -->
+                        <div class="metric-grid">
+                            <div class="metric-card">
+                                <div class="metric-label">Este Mês</div>
+                                <div class="metric-value" id="horasMes">0h</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-label">Esta Semana</div>
+                                <div class="metric-value positive" id="horasSemana">0h</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-label">Valor Acumulado</div>
+                                <div class="metric-value" id="valorAcumulado">R$ 0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Aba Importação -->
+        <div id="tab-importacao" class="tab-content">
+            <div class="grid grid-1">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-file-import"></i>
+                            <h2>Importação de Dados</h2>
+                        </div>
+                        <div class="card-subtitle">Upload e processamento automático de planilhas</div>
+                    </div>
+                    <div class="card-content">
+                        <div class="alert alert-info">
+                            <div class="alert-title">
+                                <i class="fas fa-info-circle"></i>
+                                Formatos Aceitos
+                            </div>
+                            <p><strong>Excel (.xlsx, .xls):</strong> Colunas obrigatórias: NOME, DATA, ENTRADA, SAIDA, SALARIO_BASE</p>
+                            <p><strong>CSV:</strong> Mesmo formato, separado por vírgulas ou ponto e vírgula</p>
+                            <p><strong>Colunas opcionais:</strong> INTERVALO_INICIO, INTERVALO_FIM, JUSTIFICATIVA</p>
+                        </div>
+                        
+                        <div class="upload-zone" id="uploadZone">
+                            <div class="upload-icon">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                            </div>
+                            <h3>Arraste seus arquivos aqui</h3>
+                            <p>ou clique para selecionar</p>
+                            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 12px;">
+                                Múltiplos arquivos aceitos: .xlsx, .xls, .csv
+                            </p>
+                            <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" multiple style="display: none;">
+                        </div>
+                        
+                        <div id="uploadProgress" style="display: none;">
+                            <div class="progress-bar">
+                                <div id="progressFill" class="progress-fill" style="width: 0%;"></div>
+                            </div>
+                            <div id="uploadStatus" style="text-align: center; color: var(--text-secondary);"></div>
+                        </div>
+                        
+                        <div id="uploadResult" style="display: none;">
+                            <div class="alert alert-success">
+                                <div class="alert-title">
+                                    <i class="fas fa-check-circle"></i>
+                                    Importação Concluída
+                                </div>
+                                <div id="uploadText"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Aba Relatórios -->
+        <div id="tab-relatorios" class="tab-content">
+            <div class="grid grid-1">
+                <!-- Filtros Avançados -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-filter"></i>
+                            <h2>Filtros Avançados</h2>
+                        </div>
+                        <div class="card-subtitle">Filtre os dados para análise específica</div>
+                    </div>
+                    <div class="card-content">
+                        <div class="form-row-3">
+                            <div class="form-group">
+                                <label class="form-label">Data Início</label>
+                                <input type="date" class="form-input" id="filtroDataInicio">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Data Fim</label>
+                                <input type="date" class="form-input" id="filtroDataFim">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Funcionário</label>
+                                <select class="form-select" id="filtroFuncionario">
+                                    <option value="">Todos</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Tipo de Dia</label>
+                                <select class="form-select" id="filtroTipoDia">
+                                    <option value="">Todos</option>
+                                    <option value="util">Dias Úteis</option>
+                                    <option value="sabado">Sábados</option>
+                                    <option value="domingo">Domingos</option>
+                                    <option value="feriado">Feriados</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="display: flex; align-items: end;">
+                                <button class="btn btn-primary" onclick="aplicarFiltros()">
+                                    <i class="fas fa-search"></i>
+                                    Aplicar Filtros
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Gráficos -->
+                <div class="grid grid-2">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fas fa-chart-bar"></i>
+                                <h2>Horas Extras por Período</h2>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="chartHorasExtras" height="300"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fas fa-chart-pie"></i>
+                                <h2>Distribuição de Valores</h2>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="chartValores" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Aba Configurações -->
+        <div id="tab-configuracoes" class="tab-content">
+            <div class="grid grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-building"></i>
+                            <h2>Configurações da Empresa</h2>
+                        </div>
+                        <div class="card-subtitle">Dados da organização</div>
+                    </div>
+                    <div class="card-content">
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-building"></i>
+                                Nome da Empresa
+                            </label>
+                            <input type="text" class="form-input" id="nomeEmpresa" 
+                                   placeholder="Digite o nome da empresa">
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-clock"></i>
+                                    Jornada Semanal
+                                </label>
+                                <select class="form-select" id="jornadaSemanal">
+                                    <option value="44">44 horas/semana</option>
+                                    <option value="40">40 horas/semana</option>
+                                    <option value="36">36 horas/semana</option>
+                                    <option value="30">30 horas/semana</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-coffee"></i>
+                                    Intervalo Padrão (min)
+                                </label>
+                                <input type="number" class="form-input" id="intervaloPadrao" 
+                                       value="60" min="0" max="120">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-money-bill-wave"></i>
+                                Salário Base Padrão (R$)
+                            </label>
+                            <input type="number" class="form-input" id="salarioPadrao" 
+                                   value="1400" step="0.01">
+                        </div>
+                        
+                        <button class="btn btn-success btn-full" onclick="salvarConfiguracoes()">
+                            <i class="fas fa-save"></i>
+                            Salvar Configurações
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-database"></i>
+                            <h2>Gerenciamento de Dados</h2>
+                        </div>
+                        <div class="card-subtitle">Backup e informações do sistema</div>
+                    </div>
+                    <div class="card-content">
+                        <div class="metric-grid">
+                            <div class="metric-card">
+                                <div class="metric-label">Total Registros</div>
+                                <div class="metric-value" id="totalRegistrosConfig">0</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-label">Funcionários</div>
+                                <div class="metric-value" id="totalFuncionarios">0</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-label">Período</div>
+                                <div class="metric-value" id="periodoTotal">-</div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <div class="alert-title">
+                                <i class="fas fa-shield-alt"></i>
+                                Backup de Segurança
+                            </div>
+                            <p>Mantenha seus dados seguros com backups regulares</p>
+                        </div>
+                        
+                        <div class="form-row">
+                            <button class="btn btn-secondary" onclick="exportarBackup()">
+                                <i class="fas fa-download"></i>
+                                Fazer Backup
+                            </button>
+                            <button class="btn btn-secondary" onclick="importarBackup()">
+                                <i class="fas fa-upload"></i>
+                                Restaurar Backup
+                            </button>
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <div class="alert-title">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                Área de Risco
+                            </div>
+                            <p>Esta ação não pode ser desfeita!</p>
+                            <button class="btn btn-danger" onclick="limparTodosDados()">
+                                <i class="fas fa-trash"></i>
+                                Limpar Todos os Dados
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tabela de Registros -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <i class="fas fa-table"></i>
+                    <h2>Registros de Horas Extras</h2>
+                </div>
+                <div class="card-subtitle">Histórico completo e detalhado</div>
+            </div>
+            <div class="card-content">
+                <div id="registrosContainer">
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <h3>Nenhum registro encontrado</h3>
+                        <p>Comece adicionando registros manualmente ou importando uma planilha</p>
+                        <button class="btn btn-primary" onclick="switchTab('registro')" style="margin-top: 20px;">
+                            <i class="fas fa-plus"></i>
+                            Adicionar Primeiro Registro
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Resumo Executivo -->
+        <div class="card" id="resumoSection" style="display: none;">
+            <div class="card-header">
+                <div class="card-title">
+                    <i class="fas fa-chart-line"></i>
+                    <h2>Resumo Executivo</h2>
+                </div>
+                <div class="card-subtitle">Análise completa do período</div>
+            </div>
+            <div class="card-content">
+                <div class="metric-grid">
+                    <div class="metric-card">
+                        <div class="metric-label">Total de Registros</div>
+                        <div class="metric-value" id="totalRegistros">0</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Horas Extras 50%</div>
+                        <div class="metric-value positive" id="horasExtras50">0h</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Horas Extras 100%</div>
+                        <div class="metric-value positive" id="horasExtras100">0h</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Valor Total 50%</div>
+                        <div class="metric-value positive" id="valorExtras50">R$ 0,00</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Valor Total 100%</div>
+                        <div class="metric-value positive" id="valorExtras100">R$ 0,00</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Valor Total Geral</div>
+                        <div class="metric-value" id="valorTotal">R$ 0,00</div>
+                    </div>
+                </div>
+                
+                <!-- Seção de Exportação -->
+                <div class="alert alert-info">
+                    <div class="alert-title">
+                        <i class="fas fa-file-export"></i>
+                        Exportação de Relatórios
+                    </div>
+                    <p>Gere relatórios profissionais em diversos formatos</p>
+                </div>
+                
+                <div class="export-grid no-print">
+                    <button class="btn btn-success" onclick="exportarExcel()">
+                        <i class="fas fa-file-excel"></i>
+                        Excel Detalhado
+                    </button>
+                    <button class="btn btn-success" onclick="exportarCSV()">
+                        <i class="fas fa-file-csv"></i>
+                        CSV Simples
+                    </button>
+                    <button class="btn btn-success" onclick="gerarRelatorioPDF()">
+                        <i class="fas fa-file-pdf"></i>
+                        Relatório PDF
+                    </button>
+                    <button class="btn btn-success" onclick="gerarRelatorioDetalhado()">
+                        <i class="fas fa-chart-bar"></i>
+                        Análise Completa
+                    </button>
+                    <button class="btn btn-success" onclick="prepararEmail()">
+                        <i class="fas fa-envelope"></i>
+                        Enviar por E-mail
+                    </button>
+                    <button class="btn btn-success" onclick="exportarParaContabilidade()">
+                        <i class="fas fa-calculator"></i>
+                        Export Contábil
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botão de Ajuda Flutuante -->
+    <button class="floating-help no-print" onclick="mostrarAjuda()">
+        <i class="fas fa-question"></i>
+    </button>
+
+    <!-- Notificações -->
+    <div id="notification" class="notification"></div>
+    
+    <script>
+        // Dados globais
+        let registros = [];
+        let configuracoes = {
+            nomeEmpresa: '',
+            jornadaSemanal: 44,
+            intervaloPadrao: 60,
+            salarioPadrao: 1400
+        };
+        
+        let chart1, chart2;
+        let registrosFiltrados = [];
+        
+        // Feriados nacionais brasileiros
+        const feriados2024 = {
+            '2024-01-01': 'Confraternização Universal',
+            '2024-02-12': 'Carnaval',
+            '2024-02-13': 'Carnaval',
+            '2024-03-29': 'Sexta-feira Santa',
+            '2024-04-21': 'Tiradentes',
+            '2024-05-01': 'Dia do Trabalhador',
+            '2024-09-07': 'Independência do Brasil',
+            '2024-10-12': 'Nossa Senhora Aparecida',
+            '2024-11-02': 'Finados',
+            '2024-11-15': 'Proclamação da República',
+            '2024-12-25': 'Natal'
+        };
+        
+        const feriados2025 = {
+            '2025-01-01': 'Confraternização Universal',
+            '2025-03-03': 'Carnaval',
+            '2025-03-04': 'Carnaval',
+            '2025-04-18': 'Sexta-feira Santa',
+            '2025-04-21': 'Tiradentes',
+            '2025-05-01': 'Dia do Trabalhador',
+            '2025-09-07': 'Independência do Brasil',
+            '2025-10-12': 'Nossa Senhora Aparecida',
+            '2025-11-02': 'Finados',
+            '2025-11-15': 'Proclamação da República',
+            '2025-12-25': 'Natal'
+        };
+        
+        const todosOsFeriados = { ...feriados2024, ...feriados2025 };
+        
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            inicializarSistema();
+            carregarConfiguracoes();
+            atualizarHorario();
+            setInterval(atualizarHorario, 1000);
+        });
+        
+        function inicializarSistema() {
+            document.getElementById('data').valueAsDate = new Date();
+            carregarFuncionarios();
+            configurarEventListeners();
+            atualizarEstatisticasRapidas();
+            carregarDados();
+            atualizarTudo();
+        }
+        
+        function carregarConfiguracoes() {
+            try {
+                const configSalva = localStorage.getItem('configHorasExtras');
+                if (configSalva) {
+                    configuracoes = { ...configuracoes, ...JSON.parse(configSalva) };
+                    document.getElementById('nomeEmpresa').value = configuracoes.nomeEmpresa;
+                    document.getElementById('jornadaSemanal').value = configuracoes.jornadaSemanal;
+                    document.getElementById('intervaloPadrao').value = configuracoes.intervaloPadrao;
+                    document.getElementById('salarioPadrao').value = configuracoes.salarioPadrao;
+                    document.getElementById('salarioBase').value = configuracoes.salarioPadrao;
+                }
+            } catch (e) {
+                console.log('Erro ao carregar configurações:', e);
+            }
+        }
+        
+        function configurarEventListeners() {
+            // Upload de arquivos
+            const uploadZone = document.getElementById('uploadZone');
+            const fileInput = document.getElementById('fileInput');
+            
+            uploadZone.addEventListener('click', () => fileInput.click());
+            uploadZone.addEventListener('dragover', handleDragOver);
+            uploadZone.addEventListener('dragleave', handleDragLeave);
+            uploadZone.addEventListener('drop', handleDrop);
+            fileInput.addEventListener('change', handleFileSelect);
+            
+            // Formulário principal
+            document.getElementById('pontoForm').addEventListener('submit', handleFormSubmit);
+            
+            // Listeners para cálculo em tempo real
+            ['horaEntrada', 'horaSaida', 'intervaloInicio', 'intervaloFim', 'data', 'salarioBase'].forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.addEventListener('change', mostrarAnaliseInteligente);
+                    element.addEventListener('input', mostrarAnaliseInteligente);
+                }
+            });
+        }
+        
+        // Navegação por abas
+        function switchTab(tabName) {
+            // Esconder todas as abas
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remover classe active de todos os botões
+            document.querySelectorAll('.tab').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Mostrar aba selecionada
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            
+            // Ativar botão correspondente
+            event.target.classList.add('active');
+            
+            // Atualizar conteúdo específico da aba
+            if (tabName === 'relatorios') {
+                setTimeout(() => {
+                    atualizarGraficos();
+                    atualizarFiltros();
+                }, 100);
+            } else if (tabName === 'configuracoes') {
+                atualizarEstatisticasConfig();
+            }
+        }
+        
+        // Atualizar horário
+        function atualizarHorario() {
+            const agora = new Date();
+            const opcoes = {
+                timeZone: 'America/Sao_Paulo',
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            };
+            document.getElementById('currentDateTime').textContent = 
+                new Intl.DateTimeFormat('pt-BR', opcoes).format(agora);
+        }
+        
+        // Preenchimentos rápidos
+        function preencherHorarioComercial() {
+            document.getElementById('horaEntrada').value = '08:00';
+            document.getElementById('horaSaida').value = '17:00';
+            document.getElementById('intervaloInicio').value = '12:00';
+            document.getElementById('intervaloFim').value = '13:00';
+            mostrarAnaliseInteligente();
+        }
+        
+        function preencherHorarioManha() {
+            document.getElementById('horaEntrada').value = '06:00';
+            document.getElementById('horaSaida').value = '14:00';
+            document.getElementById('intervaloInicio').value = '10:00';
+            document.getElementById('intervaloFim').value = '10:30';
+            mostrarAnaliseInteligente();
+        }
+        
+        function preencherHorarioNoite() {
+            document.getElementById('horaEntrada').value = '22:00';
+            document.getElementById('horaSaida').value = '06:00';
+            document.getElementById('intervaloInicio').value = '02:00';
+            document.getElementById('intervaloFim').value = '02:30';
+            mostrarAnaliseInteligente();
+        }
+        
+        function preencherFimSemana() {
+            const hoje = new Date();
+            const sabado = new Date(hoje);
+            sabado.setDate(hoje.getDate() + (6 - hoje.getDay()));
+            document.getElementById('data').valueAsDate = sabado;
+            document.getElementById('horaEntrada').value = '08:00';
+            document.getElementById('horaSaida').value = '12:00';
+            document.getElementById('intervaloInicio').value = '';
+            document.getElementById('intervaloFim').value = '';
+            mostrarAnaliseInteligente();
+        }
+        
+        // Detecção de tipo de dia conforme CLT
+        function detectarTipoDia(data) {
+            const dataObj = new Date(data + 'T00:00:00');
+            const diaSemana = dataObj.getDay();
+            const dataStr = data;
+            
+            if (todosOsFeriados[dataStr]) {
+                return {
+                    tipo: 'feriado',
+                    descricao: todosOsFeriados[dataStr],
+                    percentualExtra: 100,
+                    icon: 'fas fa-star',
+                    adicional: '100%',
+                    artigo: 'Art. 70 CLT'
+                };
+            }
+            
+            if (diaSemana === 0) {
+                return {
+                    tipo: 'domingo',
+                    descricao: 'Domingo',
+                    percentualExtra: 100,
+                    icon: 'fas fa-sun',
+                    adicional: '100%',
+                    artigo: 'Art. 67 CLT'
+                };
+            } else if (diaSemana === 6) {
+                return {
+                    tipo: 'sabado',
+                    descricao: 'Sábado',
+                    percentualExtra: 100,
+                    icon: 'fas fa-calendar-week',
+                    adicional: '100%',
+                    artigo: 'Lei 10.101/2000'
+                };
+            } else {
+                return {
+                    tipo: 'util',
+                    descricao: 'Dia Útil',
+                    percentualExtra: 50,
+                    icon: 'fas fa-briefcase',
+                    adicional: '50%',
+                    artigo: 'Art. 59 CLT'
+                };
+            }
+        }
+        
+        // Cálculo conforme CLT - CORRIGIDO
+        function calcularHorasCLT(entrada, saida, intervaloInicio, intervaloFim, data) {
+            let entradaTime = new Date(`2000-01-01T${entrada}`);
+            let saidaTime = new Date(`2000-01-01T${saida}`);
+            
+            // Lidar com horário noturno
+            if (saidaTime < entradaTime) {
+                saidaTime.setDate(saidaTime.getDate() + 1);
+            }
+            
+            let totalMinutos = (saidaTime - entradaTime) / 60000;
+            
+            // Subtrair intervalo se houver
+            if (intervaloInicio && intervaloFim) {
+                const inicioIntervalo = new Date(`2000-01-01T${intervaloInicio}`);
+                const fimIntervalo = new Date(`2000-01-01T${intervaloFim}`);
+                let intervaloMinutos = (fimIntervalo - inicioIntervalo) / 60000;
+                
+                // Validar intervalo mínimo conforme CLT
+                if (totalMinutos > 6 * 60 && intervaloMinutos < 15) {
+                    intervaloMinutos = 15; // Mínimo 15 min para jornada > 6h
+                } else if (totalMinutos > 4 * 60 && intervaloMinutos < 15) {
+                    intervaloMinutos = 15; // Mínimo 15 min para jornada > 4h
+                }
+                
+                totalMinutos -= intervaloMinutos;
+            }
+            
+            const totalHoras = totalMinutos / 60;
+            const tipoDia = detectarTipoDia(data);
+            
+            let horasNormais = 0;
+            let horasExtras50 = 0;
+            let horasExtras100 = 0;
+            let adicionalNoturno = 0;
+            
+            // Cálculo conforme CLT
+            if (tipoDia.tipo === 'util') {
+                const jornadaNormal = 8; // 8 horas normais por dia
+                const limiteExtra = 2;   // Máximo 2h extras por dia (Art. 59 CLT)
+                
+                if (totalHoras <= jornadaNormal) {
+                    horasNormais = totalHoras;
+                } else {
+                    horasNormais = jornadaNormal;
+                    const horasExcedentes = totalHoras - jornadaNormal;
+                    
+                    if (horasExcedentes <= limiteExtra) {
+                        horasExtras50 = horasExcedentes;
+                    } else {
+                        horasExtras50 = limiteExtra;
+                        // Horas além do limite legal são irregulares
+                        horasExtras100 = horasExcedentes - limiteExtra;
+                    }
+                }
+            } else {
+                // Domingos, feriados e sábados: tudo é 100%
+                horasExtras100 = totalHoras;
+            }
+            
+            // Adicional noturno (22h às 5h) - 20% conforme CLT Art. 73
+            if (isHorarioNoturno(entrada, saida)) {
+                adicionalNoturno = calcularAdicionalNoturno(entrada, saida, totalHoras);
+            }
+            
+            return {
+                totalHoras,
+                horasNormais,
+                horasExtras50,
+                horasExtras100,
+                adicionalNoturno,
+                tipoDia,
+                formatado: formatarHoras(totalHoras),
+                observacoes: gerarObservacoesCLT(tipoDia, totalHoras, horasExtras50, horasExtras100)
+            };
+        }
+        
+        // Verificar se é horário noturno
+        function isHorarioNoturno(entrada, saida) {
+            const entradaHora = parseInt(entrada.split(':')[0]);
+            const saidaHora = parseInt(saida.split(':')[0]);
+            
+            // Horário noturno: 22h às 5h
+            return entradaHora >= 22 || entradaHora <= 5 || saidaHora >= 22 || saidaHora <= 5;
+        }
+        
+        // Calcular adicional noturno
+        function calcularAdicionalNoturno(entrada, saida, totalHoras) {
+            // Simplificado: se trabalha em horário noturno, aplica 20% sobre as horas noturnas
+            const entradaHora = parseInt(entrada.split(':')[0]);
+            const saidaHora = parseInt(saida.split(':')[0]);
+            
+            let horasNoturnas = 0;
+            
+            // Se entra após 22h ou antes das 5h
+            if (entradaHora >= 22 || entradaHora <= 5) {
+                horasNoturnas = totalHoras * 0.7; // Estimativa
+            }
+            
+            return horasNoturnas;
+        }
+        
+        // Gerar observações conforme CLT
+        function gerarObservacoesCLT(tipoDia, totalHoras, horasExtras50, horasExtras100) {
+            let observacoes = [];
+            
+            if (tipoDia.tipo === 'util') {
+                if (totalHoras > 10) {
+                    observacoes.push('⚠️ ATENÇÃO: Jornada superior a 10h diárias (limite máximo CLT)');
+                }
+                if (horasExtras50 > 2) {
+                    observacoes.push('⚠️ ATENÇÃO: Horas extras superiores a 2h diárias (Art. 59 CLT)');
+                }
+            }
+            
+            if (tipoDia.tipo === 'domingo' || tipoDia.tipo === 'feriado') {
+                observacoes.push('📋 Necessária autorização prévia e compensação');
+            }
+            
+            return observacoes;
+        }
+        
+        // Formatação de horas
+        function formatarHoras(horas) {
+            if (horas === 0) return '0h';
+            const h = Math.floor(horas);
+            const m = Math.round((horas % 1) * 60);
+            return `${h}h${m > 0 ? String(m).padStart(2, '0') + 'min' : ''}`;
+        }
+        
+        // Cálculo monetário conforme CLT
+        function calcularValorCLT(horasNormais, horasExtras50, horasExtras100, adicionalNoturno, salarioBase) {
+            // Valor da hora conforme CLT: salário mensal ÷ 220h (44h/semana × 5 semanas)
+            const valorHora = salarioBase / 220;
+            
+            const valorNormal = horasNormais * valorHora;
+            const valorExtra50 = horasExtras50 * valorHora * 1.5; // 50% de adicional
+            const valorExtra100 = horasExtras100 * valorHora * 2; // 100% de adicional
+            const valorNoturno = adicionalNoturno * valorHora * 0.2; // 20% de adicional noturno
+            
+            return {
+                valorHora: valorHora,
+                valorNormal: valorNormal,
+                valorExtra50: valorExtra50,
+                valorExtra100: valorExtra100,
+                valorNoturno: valorNoturno,
+                valorTotal: valorNormal + valorExtra50 + valorExtra100 + valorNoturno
+            };
+        }
+        
+        // Mostrar análise inteligente
+        function mostrarAnaliseInteligente() {
+            const entrada = document.getElementById('horaEntrada').value;
+            const saida = document.getElementById('horaSaida').value;
+            const data = document.getElementById('data').value;
+            
+            if (entrada && saida && data) {
+                const resultado = calcularHorasCLT(
+                    entrada, 
+                    saida, 
+                    document.getElementById('intervaloInicio').value,
+                    document.getElementById('intervaloFim').value,
+                    data
+                );
+                
+                const salario = parseFloat(document.getElementById('salarioBase').value) || configuracoes.salarioPadrao;
+                const valores = calcularValorCLT(
+                    resultado.horasNormais, 
+                    resultado.horasExtras50, 
+                    resultado.horasExtras100, 
+                    resultado.adicionalNoturno, 
+                    salario
+                );
+                
+                let conteudo = `
+                    <div style="display: flex; align-items: center; margin-bottom: 16px; padding: 12px; background: rgba(14, 165, 233, 0.1); border-radius: 6px;">
+                        <i class="${resultado.tipoDia.icon}" style="font-size: 20px; margin-right: 12px; color: #0ea5e9;"></i>
+                        <div>
+                            <strong>${resultado.tipoDia.descricao}</strong> - ${resultado.formatado} trabalhadas<br>
+                            <small style="color: #64748b;">${resultado.tipoDia.artigo} - Adicional: ${resultado.tipoDia.adicional}</small>
+                        </div>
+                    </div>
+                `;
+                
+                if (resultado.horasNormais > 0) {
+                    conteudo += `
+                        <div class="calculation-row">
+                            <span><i class="fas fa-clock"></i> Horas normais: ${formatarHoras(resultado.horasNormais)}</span>
+                            <span><strong>R$ ${valores.valorNormal.toFixed(2)}</strong></span>
+                        </div>
+                    `;
+                }
+                
+                if (resultado.horasExtras50 > 0) {
+                    conteudo += `
+                        <div class="calculation-row">
+                            <span><i class="fas fa-plus-circle"></i> Horas extras 50%: ${formatarHoras(resultado.horasExtras50)}</span>
+                            <span><strong>R$ ${valores.valorExtra50.toFixed(2)}</strong></span>
+                        </div>
+                    `;
+                }
+                
+                if (resultado.horasExtras100 > 0) {
+                    conteudo += `
+                        <div class="calculation-row">
+                            <span><i class="fas fa-fire"></i> Horas extras 100%: ${formatarHoras(resultado.horasExtras100)}</span>
+                            <span><strong>R$ ${valores.valorExtra100.toFixed(2)}</strong></span>
+                        </div>
+                    `;
+                }
+                
+                if (resultado.adicionalNoturno > 0) {
+                    conteudo += `
+                        <div class="calculation-row">
+                            <span><i class="fas fa-moon"></i> Adicional noturno: ${formatarHoras(resultado.adicionalNoturno)}</span>
+                            <span><strong>R$ ${valores.valorNoturno.toFixed(2)}</strong></span>
+                        </div>
+                    `;
+                }
+                
+                conteudo += `
+                    <div class="calculation-row">
+                        <span><i class="fas fa-calculator"></i> <strong>VALOR TOTAL</strong></span>
+                        <span><strong>R$ ${valores.valorTotal.toFixed(2)}</strong></span>
+                    </div>
+                `;
+                
+                // Adicionar observações CLT
+                if (resultado.observacoes.length > 0) {
+                    conteudo += `<div style="margin-top: 16px; padding: 12px; background: #fef3c7; border-radius: 6px;">`;
+                    resultado.observacoes.forEach(obs => {
+                        conteudo += `<div style="margin: 4px 0; color: #92400e; font-size: 13px;">${obs}</div>`;
+                    });
+                    conteudo += `</div>`;
+                }
+                
+                document.getElementById('intelligenceContent').innerHTML = conteudo;
+                document.getElementById('intelligencePanel').classList.add('show');
+            } else {
+                document.getElementById('intelligencePanel').classList.remove('show');
+            }
+        }
+        
+        // Submeter formulário
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            
+            const nome = document.getElementById('nomeFuncionario').value;
+            const data = document.getElementById('data').value;
+            const entrada = document.getElementById('horaEntrada').value;
+            const saida = document.getElementById('horaSaida').value;
+            const intervaloInicio = document.getElementById('intervaloInicio').value;
+            const intervaloFim = document.getElementById('intervaloFim').value;
+            const justificativa = document.getElementById('justificativa').value;
+            const salario = parseFloat(document.getElementById('salarioBase').value) || configuracoes.salarioPadrao;
+            
+            const resultado = calcularHorasCLT(entrada, saida, intervaloInicio, intervaloFim, data);
+            const valores = calcularValorCLT(
+                resultado.horasNormais, 
+                resultado.horasExtras50, 
+                resultado.horasExtras100, 
+                resultado.adicionalNoturno, 
+                salario
+            );
+            
+            const registro = {
+                id: Date.now(),
+                nome: nome,
+                data: data,
+                entrada: entrada,
+                saida: saida,
+                intervaloInicio: intervaloInicio,
+                intervaloFim: intervaloFim,
+                justificativa: justificativa,
+                salarioBase: salario,
+                ...resultado,
+                ...valores,
+                origem: 'manual',
+                dataRegistro: new Date().toISOString()
+            };
+            
+            registros.push(registro);
+            salvarDados();
+            atualizarListaFuncionarios(nome);
+            
+            mostrarNotificacao(`✅ Registro adicionado! ${resultado.formatado} - R$ ${valores.valorTotal.toFixed(2)}`, 'success');
+            
+            // Limpar formulário
+            e.target.reset();
+            document.getElementById('data').valueAsDate = new Date();
+            document.getElementById('salarioBase').value = salario;
+            document.getElementById('intelligencePanel').classList.remove('show');
+            
+            atualizarTudo();
+        }
+        
+        // Upload de arquivos
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('dragover');
+        }
+        
+        function handleDragLeave(e) {
+            e.currentTarget.classList.remove('dragover');
+        }
+        
+        function handleDrop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            processarArquivos([...files]);
+        }
+        
+        function handleFileSelect(e) {
+            const files = e.target.files;
+            processarArquivos([...files]);
+        }
+        
+        // Processar arquivos
+        function processarArquivos(arquivos) {
+            if (arquivos.length === 0) return;
+            
+            let processados = 0;
+            let totalRegistros = 0;
+            let erros = [];
+            
+            document.getElementById('uploadProgress').style.display = 'block';
+            document.getElementById('uploadStatus').textContent = `Processando ${arquivos.length} arquivo(s)...`;
+            
+            arquivos.forEach((arquivo, index) => {
+                setTimeout(() => {
+                    processarArquivo(arquivo, (resultado) => {
+                        processados++;
+                        totalRegistros += resultado.sucessos;
+                        erros = erros.concat(resultado.erros);
+                        
+                        const progresso = (processados / arquivos.length) * 100;
+                        document.getElementById('progressFill').style.width = progresso + '%';
+                        
+                        if (processados === arquivos.length) {
+                            finalizarImportacao(totalRegistros, erros);
+                        }
+                    });
+                }, index * 500);
+            });
+        }
+        
+        function processarArquivo(arquivo, callback) {
+            const extension = arquivo.name.split('.').pop().toLowerCase();
+            
+            if (['xlsx', 'xls'].includes(extension)) {
+                processarExcel(arquivo, callback);
+            } else if (extension === 'csv') {
+                processarCSV(arquivo, callback);
+            } else {
+                callback({ sucessos: 0, erros: [`${arquivo.name}: Formato não suportado`] });
+            }
+        }
+        
+        function processarExcel(arquivo, callback) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const sheetName = workbook.SheetNames[0];
+                    const sheet = workbook.Sheets[sheetName];
+                    const json = XLSX.utils.sheet_to_json(sheet);
+                    
+                    const resultado = processarDadosImportados(json, arquivo.name);
+                    callback(resultado);
+                } catch (error) {
+                    callback({ sucessos: 0, erros: [`${arquivo.name}: ${error.message}`] });
+                }
+            };
+            reader.readAsArrayBuffer(arquivo);
+        }
+        
+        function processarCSV(arquivo, callback) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const csv = e.target.result;
+                    Papa.parse(csv, {
+                        header: true,
+                        dynamicTyping: true,
+                        skipEmptyLines: true,
+                        delimiter: ',',
+                        complete: function(results) {
+                            const resultado = processarDadosImportados(results.data, arquivo.name);
+                            callback(resultado);
+                        },
+                        error: function(error) {
+                            callback({ sucessos: 0, erros: [`${arquivo.name}: ${error.message}`] });
+                        }
+                    });
+                } catch (error) {
+                    callback({ sucessos: 0, erros: [`${arquivo.name}: ${error.message}`] });
+                }
+            };
+            reader.readAsText(arquivo);
+        }
+        
+        function processarDadosImportados(dados, nomeArquivo) {
+            let sucessos = 0;
+            let erros = [];
+            
+            dados.forEach((linha, index) => {
+                try {
+                    const nome = linha.NOME || linha.Nome || linha.nome;
+                    const dataStr = linha.DATA || linha.Data || linha.data;
+                    const entrada = linha.ENTRADA || linha.Entrada || linha.entrada;
+                    const saida = linha.SAIDA || linha.Saida || linha.saida;
+                    const salarioBase = parseFloat(linha.SALARIO_BASE || linha.SalarioBase || linha.salario_base) || configuracoes.salarioPadrao;
+                    const intervaloInicio = linha.INTERVALO_INICIO || linha.IntervaloInicio || linha.intervalo_inicio || '';
+                    const intervaloFim = linha.INTERVALO_FIM || linha.IntervaloFim || linha.intervalo_fim || '';
+                    const justificativa = linha.JUSTIFICATIVA || linha.Justificativa || linha.justificativa || '';
+                    
+                    if (!nome || !dataStr || !entrada || !saida) {
+                        erros.push(`${nomeArquivo} - Linha ${index + 2}: Dados obrigatórios incompletos (NOME, DATA, ENTRADA, SAIDA)`);
+                        return;
+                    }
+                    
+                    // Converter data
+                    let data;
+                    if (typeof dataStr === 'number') {
+                        const excelDate = new Date((dataStr - 25569) * 86400 * 1000);
+                        data = excelDate.toISOString().split('T')[0];
+                    } else {
+                        const parts = dataStr.toString().split('/');
+                        if (parts.length === 3) {
+                            data = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                        } else {
+                            data = dataStr;
+                        }
+                    }
+                    
+                    const resultado = calcularHorasCLT(entrada.toString(), saida.toString(), intervaloInicio, intervaloFim, data);
+                    const valores = calcularValorCLT(
+                        resultado.horasNormais, 
+                        resultado.horasExtras50, 
+                        resultado.horasExtras100, 
+                        resultado.adicionalNoturno, 
+                        salarioBase
+                    );
+                    
+                    const registro = {
+                        id: Date.now() + index + Math.random(),
+                        nome: nome,
+                        data: data,
+                        entrada: entrada,
+                        saida: saida,
+                        intervaloInicio: intervaloInicio,
+                        intervaloFim: intervaloFim,
+                        justificativa: justificativa,
+                        salarioBase: salarioBase,
+                        ...resultado,
+                        ...valores,
+                        origem: 'planilha',
+                        dataRegistro: new Date().toISOString()
+                    };
+                    
+                    registros.push(registro);
+                    atualizarListaFuncionarios(nome);
+                    sucessos++;
+                    
+                } catch (error) {
+                    erros.push(`${nomeArquivo} - Linha ${index + 2}: ${error.message}`);
+                }
+            });
+            
+            return { sucessos, erros };
+        }
+        
+        function finalizarImportacao(totalRegistros, erros) {
+            document.getElementById('uploadProgress').style.display = 'none';
+            
+            let mensagem = `✅ ${totalRegistros} registros importados com sucesso!`;
+            if (erros.length > 0) {
+                mensagem += `\n⚠️ ${erros.length} erro(s) encontrado(s)`;
+                console.log('Erros de importação:', erros);
+            }
+            
+            document.getElementById('uploadText').textContent = mensagem;
+            document.getElementById('uploadResult').style.display = 'block';
+            
+            salvarDados();
+            atualizarTudo();
+            
+            mostrarNotificacao(`Importação concluída: ${totalRegistros} registros`, 'success');
+        }
+        
+        // Gerenciamento de funcionários
+        function carregarFuncionarios() {
+            try {
+                const funcionarios = localStorage.getItem('funcionariosHorasExtras');
+                if (funcionarios) {
+                    const lista = JSON.parse(funcionarios);
+                    const datalist = document.getElementById('funcionarios');
+                    if (datalist) {
+                        datalist.innerHTML = '';
+                        lista.forEach(nome => {
+                            const option = document.createElement('option');
+                            option.value = nome;
+                            datalist.appendChild(option);
+                        });
+                    }
+                }
+            } catch (e) {
+                console.log('Erro ao carregar funcionários:', e);
+            }
+        }
+        
+        function atualizarListaFuncionarios(novoNome) {
+            try {
+                let funcionarios = [];
+                const funcionariosExistentes = localStorage.getItem('funcionariosHorasExtras');
+                if (funcionariosExistentes) {
+                    funcionarios = JSON.parse(funcionariosExistentes);
+                }
+                
+                if (!funcionarios.includes(novoNome)) {
+                    funcionarios.push(novoNome);
+                    localStorage.setItem('funcionariosHorasExtras', JSON.stringify(funcionarios));
+                    carregarFuncionarios();
+                }
+            } catch (e) {
+                console.log('Erro ao atualizar funcionários:', e);
+            }
+        }
+        
+        // Atualizar tudo
+        function atualizarTudo() {
+            atualizarRegistros();
+            atualizarResumo();
+            atualizarEstatisticasRapidas();
+            atualizarFiltros();
+        }
+        
+        // Atualizar registros
+        function atualizarRegistros() {
+            const container = document.getElementById('registrosContainer');
+            
+            if (registros.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <h3>Nenhum registro encontrado</h3>
+                        <p>Comece adicionando registros manualmente ou importando uma planilha</p>
+                        <button class="btn btn-primary" onclick="switchTab('registro')" style="margin-top: 20px;">
+                            <i class="fas fa-plus"></i>
+                            Adicionar Primeiro Registro
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            const registrosParaMostrar = registrosFiltrados.length > 0 ? registrosFiltrados : registros;
+            registrosParaMostrar.sort((a, b) => new Date(b.data) - new Date(a.data));
+            
+            let html = `
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th><i class="fas fa-calendar"></i> Data</th>
+                                <th><i class="fas fa-user"></i> Nome</th>
+                                <th><i class="fas fa-tag"></i> Tipo</th>
+                                <th><i class="fas fa-clock"></i> Período</th>
+                                <th><i class="fas fa-plus-circle"></i> 50%</th>
+                                <th><i class="fas fa-fire"></i> 100%</th>
+                                <th><i class="fas fa-dollar-sign"></i> Valor</th>
+                                <th><i class="fas fa-sticky-note"></i> Obs.</th>
+                                <th class="no-print">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            registrosParaMostrar.forEach(registro => {
+                const dataFormatada = new Date(registro.data + 'T00:00:00').toLocaleDateString('pt-BR');
+                
+                let tipoClass, tipoTexto, tipoIcon;
+                switch(registro.tipoDia.tipo) {
+                    case 'sabado':
+                        tipoClass = 'badge-warning';
+                        tipoTexto = 'Sábado';
+                        tipoIcon = 'fas fa-calendar-week';
+                        break;
+                    case 'domingo':
+                        tipoClass = 'badge-danger';
+                        tipoTexto = 'Domingo';
+                        tipoIcon = 'fas fa-sun';
+                        break;
+                    case 'feriado':
+                        tipoClass = 'badge-danger';
+                        tipoTexto = 'Feriado';
+                        tipoIcon = 'fas fa-star';
+                        break;
+                    default:
+                        tipoClass = 'badge-success';
+                        tipoTexto = 'Útil';
+                        tipoIcon = 'fas fa-briefcase';
+                }
+                
+                const periodo = registro.intervaloInicio 
+                    ? `${registro.entrada} às ${registro.saida} (${registro.intervaloInicio}-${registro.intervaloFim})`
+                    : `${registro.entrada} às ${registro.saida}`;
+                
+                html += `
+                    <tr>
+                        <td><strong>${dataFormatada}</strong></td>
+                        <td>${registro.nome}</td>
+                        <td><span class="badge ${tipoClass}"><i class="${tipoIcon}"></i> ${tipoTexto}</span></td>
+                        <td>${periodo}</td>
+                        <td>
+                            ${registro.horasExtras50 > 0 ? 
+                                `<span class="badge badge-warning">${formatarHoras(registro.horasExtras50)}</span>` : 
+                                '-'}
+                        </td>
+                        <td>
+                            ${registro.horasExtras100 > 0 ? 
+                                `<span class="badge badge-danger">${formatarHoras(registro.horasExtras100)}</span>` : 
+                                '-'}
+                        </td>
+                        <td><strong>R$ ${registro.valorTotal.toFixed(2)}</strong></td>
+                        <td title="${registro.justificativa || ''}">${registro.justificativa ? (registro.justificativa.length > 20 ? registro.justificativa.substring(0, 20) + '...' : registro.justificativa) : '-'}</td>
+                        <td class="no-print">
+                            <div class="actions-row">
+                                <button class="btn btn-danger btn-sm" onclick="removerRegistro(${registro.id})" title="Remover">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += `</tbody></table></div>`;
+            container.innerHTML = html;
+        }
+        
+        // Atualizar resumo
+        function atualizarResumo() {
+            if (registros.length === 0) {
+                document.getElementById('resumoSection').style.display = 'none';
+                return;
+            }
+            
+            document.getElementById('resumoSection').style.display = 'block';
+            
+            const registrosParaCalculo = registrosFiltrados.length > 0 ? registrosFiltrados : registros;
+            
+            let totalExtras50 = 0;
+            let totalExtras100 = 0;
+            let totalValor50 = 0;
+            let totalValor100 = 0;
+            let totalValorGeral = 0;
+            
+            registrosParaCalculo.forEach(registro => {
+                totalExtras50 += registro.horasExtras50 || 0;
+                totalExtras100 += registro.horasExtras100 || 0;
+                totalValor50 += registro.valorExtra50 || 0;
+                totalValor100 += registro.valorExtra100 || 0;
+                totalValorGeral += registro.valorTotal || 0;
+            });
+            
+            document.getElementById('totalRegistros').textContent = registrosParaCalculo.length;
+            document.getElementById('horasExtras50').textContent = formatarHoras(totalExtras50);
+            document.getElementById('horasExtras100').textContent = formatarHoras(totalExtras100);
+            document.getElementById('valorExtras50').textContent = `R$ ${totalValor50.toFixed(2)}`;
+            document.getElementById('valorExtras100').textContent = `R$ ${totalValor100.toFixed(2)}`;
+            document.getElementById('valorTotal').textContent = `R$ ${totalValorGeral.toFixed(2)}`;
+        }
+        
+        // Estatísticas rápidas
+        function atualizarEstatisticasRapidas() {
+            const agora = new Date();
+            const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1);
+            const inicioSemana = new Date(agora);
+            inicioSemana.setDate(agora.getDate() - agora.getDay());
+            
+            const registrosMes = registros.filter(r => new Date(r.data) >= inicioMes);
+            const registrosSemana = registros.filter(r => new Date(r.data) >= inicioSemana);
+            
+            const horasMes = registrosMes.reduce((acc, r) => acc + (r.totalHoras || 0), 0);
+            const horasSemana = registrosSemana.reduce((acc, r) => acc + (r.totalHoras || 0), 0);
+            const valorAcumulado = registros.reduce((acc, r) => acc + (r.valorTotal || 0), 0);
+            
+            const elHorasMes = document.getElementById('horasMes');
+            const elHorasSemana = document.getElementById('horasSemana');
+            const elValorAcumulado = document.getElementById('valorAcumulado');
+            
+            if (elHorasMes) elHorasMes.textContent = formatarHoras(horasMes);
+            if (elHorasSemana) elHorasSemana.textContent = formatarHoras(horasSemana);
+            if (elValorAcumulado) elValorAcumulado.textContent = `R$ ${valorAcumulado.toFixed(0)}`;
+        }
+        
+        // Filtros avançados
+        function atualizarFiltros() {
+            const funcionarios = [...new Set(registros.map(r => r.nome))];
+            const selectFuncionario = document.getElementById('filtroFuncionario');
+            
+            if (selectFuncionario) {
+                selectFuncionario.innerHTML = '<option value="">Todos</option>';
+                funcionarios.forEach(nome => {
+                    const option = document.createElement('option');
+                    option.value = nome;
+                    option.textContent = nome;
+                    selectFuncionario.appendChild(option);
+                });
+            }
+        }
+        
+        function aplicarFiltros() {
+            const dataInicio = document.getElementById('filtroDataInicio').value;
+            const dataFim = document.getElementById('filtroDataFim').value;
+            const funcionario = document.getElementById('filtroFuncionario').value;
+            const tipoDia = document.getElementById('filtroTipoDia').value;
+            
+            registrosFiltrados = registros.filter(registro => {
+                if (dataInicio && registro.data < dataInicio) return false;
+                if (dataFim && registro.data > dataFim) return false;
+                if (funcionario && registro.nome !== funcionario) return false;
+                if (tipoDia && registro.tipoDia.tipo !== tipoDia) return false;
+                return true;
+            });
+            
+            atualizarRegistros();
+            atualizarResumo();
+            atualizarGraficos();
+            
+            mostrarNotificacao(`Filtros aplicados: ${registrosFiltrados.length} registros encontrados`, 'info');
+        }
+        
+        // Gráficos
+        function atualizarGraficos() {
+            const ctx1 = document.getElementById('chartHorasExtras');
+            const ctx2 = document.getElementById('chartValores');
+            
+            if (!ctx1 || !ctx2) return;
+            
+            const dadosPorMes = {};
+            const registrosParaGrafico = registrosFiltrados.length > 0 ? registrosFiltrados : registros;
+            
+            registrosParaGrafico.forEach(registro => {
+                const data = new Date(registro.data);
+                const mesAno = `${(data.getMonth() + 1).toString().padStart(2, '0')}/${data.getFullYear()}`;
+                
+                if (!dadosPorMes[mesAno]) {
+                    dadosPorMes[mesAno] = {
+                        extras50: 0,
+                        extras100: 0,
+                        valor50: 0,
+                        valor100: 0
+                    };
+                }
+                
+                dadosPorMes[mesAno].extras50 += registro.horasExtras50 || 0;
+                dadosPorMes[mesAno].extras100 += registro.horasExtras100 || 0;
+                dadosPorMes[mesAno].valor50 += registro.valorExtra50 || 0;
+                dadosPorMes[mesAno].valor100 += registro.valorExtra100 || 0;
+            });
+            
+            const labels = Object.keys(dadosPorMes).sort();
+            const dados50 = labels.map(label => dadosPorMes[label].extras50);
+            const dados100 = labels.map(label => dadosPorMes[label].extras100);
+            const valores50 = labels.map(label => dadosPorMes[label].valor50);
+            const valores100 = labels.map(label => dadosPorMes[label].valor100);
+            
+            // Destruir gráficos existentes
+            if (chart1) chart1.destroy();
+            if (chart2) chart2.destroy();
+            
+            // Gráfico de horas extras
+            chart1 = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Horas Extras 50%',
+                        data: dados50,
+                        backgroundColor: 'rgba(249, 115, 22, 0.8)',
+                        borderColor: 'rgba(249, 115, 22, 1)',
+                        borderWidth: 2
+                    }, {
+                        label: 'Horas Extras 100%',
+                        data: dados100,
+                        backgroundColor: 'rgba(220, 38, 38, 0.8)',
+                        borderColor: 'rgba(220, 38, 38, 1)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Horas Extras por Mês'
+                        },
+                        legend: {
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Horas'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Período'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Gráfico de valores
+            const totalValor50 = valores50.reduce((a, b) => a + b, 0);
+            const totalValor100 = valores100.reduce((a, b) => a + b, 0);
+            
+            chart2 = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Horas Extras 50%', 'Horas Extras 100%'],
+                    datasets: [{
+                        data: [totalValor50, totalValor100],
+                        backgroundColor: [
+                            'rgba(249, 115, 22, 0.8)',
+                            'rgba(220, 38, 38, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgba(249, 115, 22, 1)',
+                            'rgba(220, 38, 38, 1)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Distribuição de Valores'
+                        },
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Configurações
+        function salvarConfiguracoes() {
+            configuracoes.nomeEmpresa = document.getElementById('nomeEmpresa').value;
+            configuracoes.jornadaSemanal = parseInt(document.getElementById('jornadaSemanal').value);
+            configuracoes.intervaloPadrao = parseInt(document.getElementById('intervaloPadrao').value);
+            configuracoes.salarioPadrao = parseFloat(document.getElementById('salarioPadrao').value);
+            
+            try {
+                localStorage.setItem('configHorasExtras', JSON.stringify(configuracoes));
+                mostrarNotificacao('✅ Configurações salvas com sucesso!', 'success');
+                document.getElementById('salarioBase').value = configuracoes.salarioPadrao;
+            } catch (e) {
+                mostrarNotificacao('❌ Erro ao salvar configurações', 'error');
+            }
+        }
+        
+        function atualizarEstatisticasConfig() {
+            const funcionarios = [...new Set(registros.map(r => r.nome))];
+            const datas = registros.map(r => new Date(r.data));
+            const dataMin = datas.length > 0 ? new Date(Math.min(...datas)) : null;
+            const dataMax = datas.length > 0 ? new Date(Math.max(...datas)) : null;
+            
+            const elTotalRegistros = document.getElementById('totalRegistrosConfig');
+            const elTotalFuncionarios = document.getElementById('totalFuncionarios');
+            const elPeriodoTotal = document.getElementById('periodoTotal');
+            
+            if (elTotalRegistros) elTotalRegistros.textContent = registros.length;
+            if (elTotalFuncionarios) elTotalFuncionarios.textContent = funcionarios.length;
+            
+            if (dataMin && dataMax && elPeriodoTotal) {
+                const periodo = `${dataMin.toLocaleDateString('pt-BR')} - ${dataMax.toLocaleDateString('pt-BR')}`;
+                elPeriodoTotal.textContent = periodo;
+            } else if (elPeriodoTotal) {
+                elPeriodoTotal.textContent = '-';
+            }
+        }
+        
+        // Exportações
+        function exportarExcel() {
+            if (registros.length === 0) {
+                mostrarNotificacao('❌ Nenhum registro para exportar', 'error');
+                return;
+            }
+            
+            const dadosDetalhados = registros.map(r => ({
+                'Data': new Date(r.data + 'T00:00:00').toLocaleDateString('pt-BR'),
+                'Nome': r.nome,
+                'Tipo de Dia': r.tipoDia.descricao,
+                'Artigo CLT': r.tipoDia.artigo,
+                'Entrada': r.entrada,
+                'Saída': r.saida,
+                'Intervalo Início': r.intervaloInicio || '',
+                'Intervalo Fim': r.intervaloFim || '',
+                'Total Horas': r.totalHoras.toFixed(2),
+                'Horas Normais': (r.horasNormais || 0).toFixed(2),
+                'Horas Extras 50%': (r.horasExtras50 || 0).toFixed(2),
+                'Horas Extras 100%': (r.horasExtras100 || 0).toFixed(2),
+                'Adicional Noturno': (r.adicionalNoturno || 0).toFixed(2),
+                'Valor/Hora': (r.valorHora || 0).toFixed(2),
+                'Valor Normal': (r.valorNormal || 0).toFixed(2),
+                'Valor Extras 50%': (r.valorExtra50 || 0).toFixed(2),
+                'Valor Extras 100%': (r.valorExtra100 || 0).toFixed(2),
+                'Valor Noturno': (r.valorNoturno || 0).toFixed(2),
+                'Valor Total': r.valorTotal.toFixed(2),
+                'Salário Base': r.salarioBase.toFixed(2),
+                'Origem': r.origem,
+                'Justificativa': r.justificativa || ''
+            }));
+            
+            const wb = XLSX.utils.book_new();
+            const wsDetalhado = XLSX.utils.json_to_sheet(dadosDetalhados);
+            
+            // Criar resumo executivo
+            const resumo = calcularResumoCompleto();
+            const dadosResumo = [{
+                'Métrica': 'Total de Registros',
+                'Valor': registros.length
+            }, {
+                'Métrica': 'Funcionários Únicos',
+                'Valor': resumo.funcionarios.length
+            }, {
+                'Métrica': 'Total Horas Extras 50%',
+                'Valor': formatarHoras(resumo.totalExtras50)
+            }, {
+                'Métrica': 'Total Horas Extras 100%',
+                'Valor': formatarHoras(resumo.totalExtras100)
+            }, {
+                'Métrica': 'Valor Total Geral',
+                'Valor': `R$ ${resumo.valorTotal.toFixed(2)}`
+            }, {
+                'Métrica': 'Período',
+                'Valor': obterPeriodoCompleto()
+            }];
+            
+            const wsResumo = XLSX.utils.json_to_sheet(dadosResumo);
+            
+            XLSX.utils.book_append_sheet(wb, wsDetalhado, "Registros Detalhados");
+            XLSX.utils.book_append_sheet(wb, wsResumo, "Resumo Executivo");
+            
+            const nomeArquivo = `relatorio_horas_extras_${new Date().toISOString().split('T')[0]}.xlsx`;
+            XLSX.writeFile(wb, nomeArquivo);
+            
+            mostrarNotificacao('✅ Relatório Excel exportado com sucesso!', 'success');
+        }
+        
+        function exportarCSV() {
+            if (registros.length === 0) {
+                mostrarNotificacao('❌ Nenhum registro para exportar', 'error');
+                return;
+            }
+            
+            let csv = 'Data,Nome,Tipo,Entrada,Saida,Extras 50%,Extras 100%,Valor Total,Justificativa\n';
+            
+            registros.forEach(r => {
+                const data = new Date(r.data + 'T00:00:00').toLocaleDateString('pt-BR');
+                csv += `"${data}","${r.nome}","${r.tipoDia.descricao}","${r.entrada}","${r.saida}",`;
+                csv += `"${formatarHoras(r.horasExtras50 || 0)}","${formatarHoras(r.horasExtras100 || 0)}",`;
+                csv += `"R$ ${r.valorTotal.toFixed(2)}","${(r.justificativa || '').replace(/"/g, '""')}"\n`;
+            });
+            
+            baixarArquivo(csv, `horas_extras_${new Date().toISOString().split('T')[0]}.csv`, 'text/csv');
+            mostrarNotificacao('✅ Arquivo CSV exportado!', 'success');
+        }
+        
+        function gerarRelatorioPDF() {
+            if (registros.length === 0) {
+                mostrarNotificacao('❌ Nenhum registro para gerar relatório', 'error');
+                return;
+            }
+            
+            const dadosRelatorio = {
+                empresa: configuracoes.nomeEmpresa || 'Empresa',
+                periodo: obterPeriodoCompleto(),
+                registros: registros,
+                resumo: calcularResumoCompleto()
+            };
+            
+            const htmlRelatorio = gerarHTMLRelatorio(dadosRelatorio);
+            
+            const novaJanela = window.open('', '_blank');
+            novaJanela.document.write(htmlRelatorio);
+            novaJanela.document.close();
+            
+            setTimeout(() => {
+                novaJanela.print();
+            }, 500);
+            
+            mostrarNotificacao('✅ Relatório PDF preparado para impressão', 'success');
+        }
+        
+        function gerarRelatorioDetalhado() {
+            if (registros.length === 0) {
+                mostrarNotificacao('❌ Nenhum registro para gerar relatório', 'error');
+                return;
+            }
+            
+            const resumo = calcularResumoCompleto();
+            
+            let relatorio = '=== RELATÓRIO DETALHADO DE HORAS EXTRAS - CLT ===\n\n';
+            relatorio += `🏢 Empresa: ${configuracoes.nomeEmpresa || 'Não informado'}\n`;
+            relatorio += `📅 Período: ${obterPeriodoCompleto()}\n`;
+            relatorio += `📊 Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}\n`;
+            relatorio += `⚖️  Base Legal: Consolidação das Leis do Trabalho (CLT)\n\n`;
+            
+            relatorio += '📈 RESUMO EXECUTIVO:\n';
+            relatorio += `• Total de registros: ${registros.length}\n`;
+            relatorio += `• Funcionários únicos: ${resumo.funcionarios.length}\n`;
+            relatorio += `• Dias trabalhados: ${resumo.diasTrabalhados}\n`;
+            relatorio += `• Horas extras 50% (Art. 59 CLT): ${formatarHoras(resumo.totalExtras50)}\n`;
+            relatorio += `• Horas extras 100% (Dom/Feriados): ${formatarHoras(resumo.totalExtras100)}\n`;
+            relatorio += `• Valor total acumulado: R$ ${resumo.valorTotal.toFixed(2)}\n\n`;
+            
+            relatorio += '👥 ANÁLISE POR FUNCIONÁRIO:\n';
+            resumo.funcionarios.forEach(func => {
+                relatorio += `\n📋 ${func.nome}:\n`;
+                relatorio += `  • Registros: ${func.registros}\n`;
+                relatorio += `  • Total horas extras: ${formatarHoras(func.horasExtras)}\n`;
+                relatorio += `  • Valor acumulado: R$ ${func.valor.toFixed(2)}\n`;
+            });
+            
+            relatorio += '\n📋 REGISTROS DETALHADOS:\n';
+            registros.forEach((r, i) => {
+                const data = new Date(r.data + 'T00:00:00').toLocaleDateString('pt-BR');
+                relatorio += `\n${i + 1}. ${data} - ${r.nome}\n`;
+                relatorio += `   📋 ${r.tipoDia.descricao} (${r.tipoDia.artigo}) | ${r.entrada} às ${r.saida}\n`;
+                if (r.horasNormais > 0) relatorio += `   ⏰ Horas normais: ${formatarHoras(r.horasNormais)} (R$ ${(r.valorNormal || 0).toFixed(2)})\n`;
+                if (r.horasExtras50 > 0) relatorio += `   ⚡ Extras 50%: ${formatarHoras(r.horasExtras50)} (R$ ${(r.valorExtra50 || 0).toFixed(2)})\n`;
+                if (r.horasExtras100 > 0) relatorio += `   🔥 Extras 100%: ${formatarHoras(r.horasExtras100)} (R$ ${(r.valorExtra100 || 0).toFixed(2)})\n`;
+                if (r.adicionalNoturno > 0) relatorio += `   🌙 Adicional noturno: ${formatarHoras(r.adicionalNoturno)} (R$ ${(r.valorNoturno || 0).toFixed(2)})\n`;
+                if (r.justificativa) relatorio += `   📝 ${r.justificativa}\n`;
+                relatorio += `   💰 Total: R$ ${r.valorTotal.toFixed(2)}\n`;
+            });
+            
+            relatorio += '\n\n📚 BASE LEGAL:\n';
+            relatorio += '• Art. 59 CLT - Horas extras em dias úteis (máximo 2h/dia, adicional 50%)\n';
+            relatorio += '• Art. 67 CLT - Trabalho aos domingos (adicional 100%)\n';
+            relatorio += '• Art. 70 CLT - Trabalho em feriados (adicional 100%)\n';
+            relatorio += '• Art. 73 CLT - Adicional noturno (20% entre 22h e 5h)\n';
+            relatorio += '• Lei 10.101/2000 - Participação nos lucros e trabalho aos sábados\n\n';
+            
+            relatorio += '🤖 Gerado automaticamente pelo Sistema Profissional de Controle de Horas Extras - CLT';
+            
+            baixarArquivo(relatorio, `relatorio_detalhado_clt_${new Date().toISOString().split('T')[0]}.txt`, 'text/plain');
+            mostrarNotificacao('✅ Relatório detalhado gerado!', 'success');
+        }
+        
+        function exportarParaContabilidade() {
+            if (registros.length === 0) {
+                mostrarNotificacao('❌ Nenhum registro para exportar', 'error');
+                return;
+            }
+            
+            const dadosContabeis = [];
+            
+            registros.forEach(r => {
+                // Linha para horas normais (se houver)
+                if (r.horasNormais > 0) {
+                    dadosContabeis.push({
+                        'Centro de Custo': 'HORAS_NORMAIS',
+                        'Data': new Date(r.data + 'T00:00:00').toLocaleDateString('pt-BR'),
+                        'Funcionário': r.nome,
+                        'Categoria': 'NORMAL',
+                        'Artigo CLT': r.tipoDia.artigo,
+                        'Quantidade Horas': r.horasNormais.toFixed(2),
+                        'Valor Unitário': (r.valorHora || 0).toFixed(2),
+                        'Valor Total': (r.valorNormal || 0).toFixed(2),
+                        'Tipo Dia': r.tipoDia.tipo.toUpperCase(),
+                        'Observações': r.justificativa || ''
+                    });
+                }
+                
+                // Linha para horas extras 50%
+                if (r.horasExtras50 > 0) {
+                    dadosContabeis.push({
+                        'Centro de Custo': 'HORAS_EXTRAS_50',
+                        'Data': new Date(r.data + 'T00:00:00').toLocaleDateString('pt-BR'),
+                        'Funcionário': r.nome,
+                        'Categoria': 'EXTRA_50',
+                        'Artigo CLT': r.tipoDia.artigo,
+                        'Quantidade Horas': r.horasExtras50.toFixed(2),
+                        'Valor Unitário': ((r.valorHora || 0) * 1.5).toFixed(2),
+                        'Valor Total': (r.valorExtra50 || 0).toFixed(2),
+                        'Tipo Dia': r.tipoDia.tipo.toUpperCase(),
+                        'Observações': r.justificativa || ''
+                    });
+                }
+                
+                // Linha para horas extras 100%
+                if (r.horasExtras100 > 0) {
+                    dadosContabeis.push({
+                        'Centro de Custo': 'HORAS_EXTRAS_100',
+                        'Data': new Date(r.data + 'T00:00:00').toLocaleDateString('pt-BR'),
+                        'Funcionário': r.nome,
+                        'Categoria': 'EXTRA_100',
+                        'Artigo CLT': r.tipoDia.artigo,
+                        'Quantidade Horas': r.horasExtras100.toFixed(2),
+                        'Valor Unitário': ((r.valorHora || 0) * 2).toFixed(2),
+                        'Valor Total': (r.valorExtra100 || 0).toFixed(2),
+                        'Tipo Dia': r.tipoDia.tipo.toUpperCase(),
+                        'Observações': r.justificativa || ''
+                    });
+                }
+                
+                // Linha para adicional noturno
+                if (r.adicionalNoturno > 0) {
+                    dadosContabeis.push({
+                        'Centro de Custo': 'ADICIONAL_NOTURNO',
+                        'Data': new Date(r.data + 'T00:00:00').toLocaleDateString('pt-BR'),
+                        'Funcionário': r.nome,
+                        'Categoria': 'NOTURNO',
+                        'Artigo CLT': 'Art. 73 CLT',
+                        'Quantidade Horas': r.adicionalNoturno.toFixed(2),
+                        'Valor Unitário': ((r.valorHora || 0) * 0.2).toFixed(2),
+                        'Valor Total': (r.valorNoturno || 0).toFixed(2),
+                        'Tipo Dia': r.tipoDia.tipo.toUpperCase(),
+                        'Observações': 'Adicional noturno 20%'
+                    });
+                }
+            });
+            
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(dadosContabeis);
+            XLSX.utils.book_append_sheet(wb, ws, "Dados Contábeis CLT");
+            
+            XLSX.writeFile(wb, `dados_contabeis_clt_${new Date().toISOString().split('T')[0]}.xlsx`);
+            mostrarNotificacao('✅ Dados contábeis exportados conforme CLT!', 'success');
+        }
+        
+        function prepararEmail() {
+            if (registros.length === 0) {
+                mostrarNotificacao('❌ Nenhum registro para enviar', 'error');
+                return;
+            }
+            
+            const resumo = calcularResumoCompleto();
+            
+            let corpo = '📊 RELATÓRIO EXECUTIVO DE HORAS EXTRAS - CLT\n\n';
+            corpo += `🏢 Empresa: ${configuracoes.nomeEmpresa || 'Não informado'}\n`;
+            corpo += `📅 Período: ${obterPeriodoCompleto()}\n`;
+            corpo += `⚖️  Conformidade: CLT - Consolidação das Leis do Trabalho\n\n`;
+            
+            corpo += '📈 RESUMO GERAL:\n';
+            corpo += `• Total de registros: ${registros.length}\n`;
+            corpo += `• Funcionários: ${resumo.funcionarios.length}\n`;
+            corpo += `• Horas extras 50% (Art. 59): ${formatarHoras(resumo.totalExtras50)}\n`;
+            corpo += `• Horas extras 100% (Dom/Feriados): ${formatarHoras(resumo.totalExtras100)}\n`;
+            corpo += `• Valor total: R$ ${resumo.valorTotal.toFixed(2)}\n\n`;
+            
+            corpo += '👥 TOP 5 FUNCIONÁRIOS (por valor):\n';
+            resumo.funcionarios
+                .sort((a, b) => b.valor - a.valor)
+                .slice(0, 5)
+                .forEach((func, i) => {
+                    corpo += `${i + 1}. ${func.nome} - R$ ${func.valor.toFixed(2)}\n`;
+                });
+            
+            corpo += '\n⚖️ OBSERVAÇÕES LEGAIS:\n';
+            corpo += '• Todos os cálculos seguem a CLT (Arts. 59, 67, 70, 73)\n';
+            corpo += '• Horas extras limitadas a 2h/dia em dias úteis\n';
+            corpo += '• Trabalho dominical e feriados requer autorização\n\n';
+            
+            corpo += '🤖 Gerado pelo Sistema Profissional de Controle de Horas Extras - CLT';
+            
+            const assunto = `📊 Relatório CLT - Horas Extras - ${configuracoes.nomeEmpresa || 'Empresa'} - ${new Date().toLocaleDateString('pt-BR')}`;
+            
+            const mailtoLink = `mailto:?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
+            window.open(mailtoLink);
+            
+            mostrarNotificacao('✅ E-mail preparado!', 'success');
+        }
+        
+        // Funções auxiliares
+        function calcularResumoCompleto() {
+            const funcionarios = {};
+            let totalExtras50 = 0;
+            let totalExtras100 = 0;
+            let valorTotal = 0;
+            
+            registros.forEach(r => {
+                if (!funcionarios[r.nome]) {
+                    funcionarios[r.nome] = {
+                        nome: r.nome,
+                        registros: 0,
+                        horasExtras: 0,
+                        valor: 0
+                    };
+                }
+                
+                funcionarios[r.nome].registros++;
+                funcionarios[r.nome].horasExtras += (r.horasExtras50 || 0) + (r.horasExtras100 || 0);
+                funcionarios[r.nome].valor += r.valorTotal || 0;
+                
+                totalExtras50 += r.horasExtras50 || 0;
+                totalExtras100 += r.horasExtras100 || 0;
+                valorTotal += r.valorTotal || 0;
+            });
+            
+            return {
+                funcionarios: Object.values(funcionarios),
+                totalExtras50,
+                totalExtras100,
+                valorTotal,
+                diasTrabalhados: new Set(registros.map(r => r.data)).size
+            };
+        }
+        
+        function obterPeriodoCompleto() {
+            if (registros.length === 0) return 'Nenhum registro';
+            
+            const datas = registros.map(r => new Date(r.data));
+            const dataMin = new Date(Math.min(...datas));
+            const dataMax = new Date(Math.max(...datas));
+            
+            return `${dataMin.toLocaleDateString('pt-BR')} a ${dataMax.toLocaleDateString('pt-BR')}`;
+        }
+        
+        function gerarHTMLRelatorio(dados) {
+            return `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Relatório de Horas Extras - CLT</title>
+                <meta charset="UTF-8">
+                <style>
+                    body { 
+                        font-family: Arial, sans-serif; 
+                        margin: 30px; 
+                        color: #333;
+                        line-height: 1.4;
+                    }
+                    .header { 
+                        text-align: center; 
+                        margin-bottom: 30px; 
+                        border-bottom: 3px solid #1e3a8a; 
+                        padding-bottom: 20px; 
+                    }
+                    .header h1 {
+                        color: #1e3a8a;
+                        margin-bottom: 10px;
+                    }
+                    .header p {
+                        color: #64748b;
+                        margin: 5px 0;
+                    }
+                    .resumo { 
+                        background: #f8fafc;
+                        padding: 20px;
+                        border-radius: 8px;
+                        margin-bottom: 30px;
+                        border-left: 4px solid #1e3a8a;
+                    }
+                    .resumo h2 {
+                        color: #1e3a8a;
+                        margin-top: 0;
+                    }
+                    table { 
+                        width: 100%; 
+                        border-collapse: collapse; 
+                        margin-bottom: 20px;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    }
+                    th, td { 
+                        border: 1px solid #e2e8f0; 
+                        padding: 12px 8px; 
+                        text-align: left; 
+                        font-size: 12px;
+                    }
+                    th { 
+                        background-color: #1e3a8a; 
+                        color: white;
+                        font-weight: bold; 
+                    }
+                    tbody tr:nth-child(even) {
+                        background-color: #f8fafc;
+                    }
+                    .total { 
+                        font-weight: bold; 
+                        background-color: #dbeafe !important;
+                        color: #1e3a8a;
+                    }
+                    .footer {
+                        margin-top: 30px;
+                        padding-top: 20px;
+                        border-top: 1px solid #e2e8f0;
+                        text-align: center;
+                        color: #64748b;
+                        font-size: 12px;
+                    }
+                    .legal-info {
+                        background: #fffbeb;
+                        border: 1px solid #f59e0b;
+                        border-radius: 8px;
+                        padding: 15px;
+                        margin: 20px 0;
+                    }
+                    .legal-info h3 {
+                        color: #92400e;
+                        margin-top: 0;
+                    }
+                    @media print { 
+                        body { margin: 15px; }
+                        .no-print { display: none; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>📊 RELATÓRIO DE HORAS EXTRAS - CLT</h1>
+                    <p><strong>Empresa:</strong> ${dados.empresa}</p>
+                    <p><strong>Período:</strong> ${dados.periodo}</p>
+                    <p><strong>Gerado em:</strong> ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</p>
+                    <p><strong>Conformidade:</strong> CLT - Consolidação das Leis do Trabalho</p>
+                </div>
+                
+                <div class="resumo">
+                    <h2>📈 Resumo Executivo</h2>
+                    <p><strong>Total de Registros:</strong> ${dados.registros.length}</p>
+                    <p><strong>Funcionários Únicos:</strong> ${dados.resumo.funcionarios.length}</p>
+                    <p><strong>Valor Total Acumulado:</strong> R$ ${dados.resumo.valorTotal.toFixed(2)}</p>
+                    <p><strong>Período de Análise:</strong> ${dados.resumo.diasTrabalhados} dias</p>
+                </div>
+                
+                <div class="legal-info">
+                    <h3>⚖️ Base Legal</h3>
+                    <p><strong>Art. 59 CLT:</strong> Horas extras em dias úteis - máximo 2h/dia, adicional 50%</p>
+                    <p><strong>Art. 67 CLT:</strong> Trabalho dominical - adicional 100%</p>
+                    <p><strong>Art. 70 CLT:</strong> Trabalho em feriados - adicional 100%</p>
+                    <p><strong>Art. 73 CLT:</strong> Adicional noturno - 20% entre 22h e 5h</p>
+                </div>
+                
+                <h2>📋 Registros Detalhados</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Nome</th>
+                            <th>Tipo/Artigo</th>
+                            <th>Período</th>
+                            <th>H. Normais</th>
+                            <th>H. Extras 50%</th>
+                            <th>H. Extras 100%</th>
+                            <th>Adicional Noturno</th>
+                            <th>Valor Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${dados.registros.map(r => `
+                            <tr>
+                                <td>${new Date(r.data + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                                <td>${r.nome}</td>
+                                <td>${r.tipoDia.descricao}<br><small>${r.tipoDia.artigo}</small></td>
+                                <td>${r.entrada} às ${r.saida}</td>
+                                <td>${r.horasNormais > 0 ? formatarHoras(r.horasNormais) : '-'}</td>
+                                <td>${r.horasExtras50 > 0 ? formatarHoras(r.horasExtras50) : '-'}</td>
+                                <td>${r.horasExtras100 > 0 ? formatarHoras(r.horasExtras100) : '-'}</td>
+                                <td>${(r.adicionalNoturno || 0) > 0 ? formatarHoras(r.adicionalNoturno) : '-'}</td>
+                                <td>R$ ${r.valorTotal.toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                        <tr class="total">
+                            <td colspan="8"><strong>TOTAL GERAL</strong></td>
+                            <td><strong>R$ ${dados.resumo.valorTotal.toFixed(2)}</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="footer">
+                    <p>Relatório gerado automaticamente pelo Sistema Profissional de Controle de Horas Extras</p>
+                    <p>Todos os cálculos seguem rigorosamente a CLT - Consolidação das Leis do Trabalho</p>
+                </div>
+            </body>
+            </html>
+            `;
+        }
+        
+        function baixarArquivo(conteudo, nomeArquivo, tipo) {
+            const blob = new Blob([conteudo], { type: `${tipo};charset=utf-8;` });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = nomeArquivo;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        }
+        
+        // Backup e restauração
+        function exportarBackup() {
+            const backup = {
+                registros: registros,
+                configuracoes: configuracoes,
+                versao: '3.0',
+                dataBackup: new Date().toISOString(),
+                sistemaOrigem: 'Sistema Profissional CLT'
+            };
+            
+            const jsonBackup = JSON.stringify(backup, null, 2);
+            baixarArquivo(jsonBackup, `backup_horas_extras_clt_${new Date().toISOString().split('T')[0]}.json`, 'application/json');
+            mostrarNotificacao('✅ Backup criado com sucesso!', 'success');
+        }
+        
+        function importarBackup() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const backup = JSON.parse(e.target.result);
+                        
+                        if (backup.registros && Array.isArray(backup.registros)) {
+                            registros = backup.registros;
+                        }
+                        
+                        if (backup.configuracoes) {
+                            configuracoes = { ...configuracoes, ...backup.configuracoes };
+                        }
+                        
+                        salvarDados();
+                        carregarConfiguracoes();
+                        atualizarTudo();
+                        
+                        mostrarNotificacao(`✅ Backup restaurado! ${registros.length} registros carregados.`, 'success');
+                    } catch (error) {
+                        mostrarNotificacao('❌ Erro ao restaurar backup: arquivo inválido', 'error');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+        
+        function limparTodosDados() {
+            if (confirm('⚠️ ATENÇÃO: Esta ação irá apagar TODOS os dados permanentemente!\n\nDeseja continuar?')) {
+                if (confirm('Tem certeza absoluta? Esta ação não pode ser desfeita!')) {
+                    registros = [];
+                    registrosFiltrados = [];
+                    localStorage.removeItem('registrosHorasExtras');
+                    localStorage.removeItem('funcionariosHorasExtras');
+                    
+                    atualizarTudo();
+                    mostrarNotificacao('🗑️ Todos os dados foram removidos', 'info');
+                }
+            }
+        }
+        
+        // Utilitários
+        function removerRegistro(id) {
+            if (confirm('🗑️ Deseja realmente remover este registro?\n\nEsta ação não pode ser desfeita.')) {
+                registros = registros.filter(r => r.id !== id);
+                salvarDados();
+                atualizarTudo();
+                mostrarNotificacao('✅ Registro removido com sucesso', 'info');
+            }
+        }
+        
+        function salvarDados() {
+            try {
+                localStorage.setItem('registrosHorasExtras', JSON.stringify(registros));
+            } catch (e) {
+                mostrarNotificacao('❌ Erro ao salvar dados', 'error');
+                console.error('Erro ao salvar:', e);
+            }
+        }
+        
+        function carregarDados() {
+            try {
+                const dados = localStorage.getItem('registrosHorasExtras');
+                if (dados) {
+                    registros = JSON.parse(dados);
+                }
+            } catch (e) {
+                console.log('Erro ao carregar dados:', e);
+                registros = [];
+            }
+        }
+        
+        function mostrarNotificacao(mensagem, tipo = 'info') {
+            const notification = document.getElementById('notification');
+            notification.innerHTML = `<i class="fas fa-${getIconForType(tipo)}"></i> ${mensagem}`;
+            notification.className = `notification ${tipo} show`;
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 5000);
+        }
+        
+        function getIconForType(tipo) {
+            switch(tipo) {
+                case 'success': return 'check-circle';
+                case 'error': return 'exclamation-triangle';
+                case 'warning': return 'exclamation-circle';
+                default: return 'info-circle';
+            }
+        }
+        
+        // Função de ajuda
+        function mostrarAjuda() {
+            const ajuda = `
+📚 GUIA RÁPIDO - SISTEMA CLT
+
+🔹 CÁLCULOS AUTOMÁTICOS:
+• Dias úteis: Horas normais (até 8h) + Extras 50% (até 2h extras)
+• Sábados/Domingos/Feriados: Todas as horas são 100%
+• Adicional noturno: 20% entre 22h e 5h (Art. 73 CLT)
+
+🔹 LEGISLAÇÃO APLICADA:
+• Art. 59 CLT: Limite de 2h extras/dia útil
+• Art. 67 CLT: Trabalho dominical
+• Art. 70 CLT: Trabalho em feriados
+• Art. 73 CLT: Adicional noturno
+
+🔹 IMPORTAÇÃO:
+• Excel/CSV com colunas: NOME, DATA, ENTRADA, SAIDA, SALARIO_BASE
+• Formatos de data aceitos: DD/MM/AAAA ou AAAA-MM-DD
+
+🔹 EXPORTAÇÃO:
+• Excel detalhado com base legal
+• CSV simples para planilhas
+• PDF para impressão
+• Dados contábeis estruturados
+
+❓ Dúvidas sobre CLT? Consulte sempre um advogado trabalhista.
+            `;
+            
+            alert(ajuda);
+        }
+        
+        // Validações CLT adicionais
+        function validarJornadaCLT(totalHoras, tipoDia) {
+            const alertas = [];
+            
+            if (tipoDia === 'util') {
+                if (totalHoras > 10) {
+                    alertas.push('⚠️ Jornada superior a 10h/dia viola Art. 59 CLT');
+                }
+                if (totalHoras > 8 && (totalHoras - 8) > 2) {
+                    alertas.push('⚠️ Horas extras superiores a 2h/dia violam Art. 59 CLT');
+                }
+            }
+            
+            if ((tipoDia === 'domingo' || tipoDia === 'feriado') && totalHoras > 0) {
+                alertas.push('📋 Trabalho em domingo/feriado requer autorização prévia');
+            }
+            
+            return alertas;
+        }
+        
+        // Aplicar validações em tempo real
+        function aplicarValidacoesCLT() {
+            const entrada = document.getElementById('horaEntrada').value;
+            const saida = document.getElementById('horaSaida').value;
+            const data = document.getElementById('data').value;
+            
+            if (entrada && saida && data) {
+                const resultado = calcularHorasCLT(
+                    entrada, 
+                    saida, 
+                    document.getElementById('intervaloInicio').value,
+                    document.getElementById('intervaloFim').value,
+                    data
+                );
+                
+                const alertas = validarJornadaCLT(resultado.totalHoras, resultado.tipoDia.tipo);
+                
+                if (alertas.length > 0) {
+                    console.log('Alertas CLT:', alertas);
+                    // Os alertas já são mostrados na análise inteligente
+                }
+            }
+        }
+        
+        // Inicializar validações
+        document.addEventListener('DOMContentLoaded', function() {
+            const campos = ['horaEntrada', 'horaSaida', 'data'];
+            campos.forEach(campo => {
+                const elemento = document.getElementById(campo);
+                if (elemento) {
+                    elemento.addEventListener('change', aplicarValidacoesCLT);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
